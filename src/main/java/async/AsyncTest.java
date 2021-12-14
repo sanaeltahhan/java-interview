@@ -1,10 +1,10 @@
 package async;
 
+import io.vavr.Tuple2;
 import io.vavr.collection.List;
-import io.vavr.*;
 import io.vavr.control.Option;
-
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * You should complete the function in this class
@@ -23,15 +23,36 @@ class AsyncTest {
   );
 
   public static CompletableFuture<Option<Ceo>> getCeoById(String ceo_id) {
-    return null;
+
+    return CompletableFuture.supplyAsync(() -> {
+      return ceos.find(ceo -> ceo.getId().equals(ceo_id));
+    });
   }
 
   public static CompletableFuture<Option<Enterprise>> getEnterpriseByCeoId(String ceo_id) {
-    return null;
+
+    return CompletableFuture.supplyAsync(() -> {
+      return enterprises.find(enterprise -> enterprise.getCeo_id().equals(ceo_id));
+    });
   }
 
-  public static CompletableFuture<Tuple2<Option<Ceo>, Option<Enterprise>>> getCEOAndEnterprise(String ceo_id) {
-    return null;
-  }
+  public static CompletableFuture<Tuple2<Option<Ceo>, Option<Enterprise>>> getCEOAndEnterprise(String ceo_id)
+      throws ExecutionException, InterruptedException {
 
+    // initialisation tuple sans valeur qu'on modifira par la suite, pour ce faire on a ajouter un constructeur vide dans la classe Ceo et Enterprise
+    Tuple2 <Option<Ceo>, Option<Enterprise>> tuple = new Tuple2<Option<Ceo>, Option<Enterprise>>(new Ceo(), new Enterprise());
+
+    return CompletableFuture.supplyAsync(() -> {
+
+      try {
+        // On modifie le tuple avec les valeurs renvoyées par getCeoById et getEnterpriseByCeoId
+        return tuple.update1(getCeoById(ceo_id).get()).update2(getEnterpriseByCeoId(ceo_id).get());
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      } catch (ExecutionException e) {
+        e.printStackTrace();
+      }
+      return null;
+    });
+  }
 }
